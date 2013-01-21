@@ -3,7 +3,7 @@ import serial
 import time
 import os
 import pyfirmata
-from boards import BOARDS
+from .boards import BOARDS
 
 def get_the_board(layout=BOARDS['arduino'], base_dir='/dev/', identifier='tty.usbserial',):
     """
@@ -24,27 +24,29 @@ def get_the_board(layout=BOARDS['arduino'], base_dir='/dev/', identifier='tty.us
             else:
                 boards.append(board)
     if len(boards) == 0:
-        raise IOError, "No boards found in %s with identifier %s" % (base_dir, identifier)
+        raise IOError("No boards found in %s with identifier %s" % (base_dir, identifier))
     elif len(boards) > 1:
-        raise IOError, "More than one board found!"
+        raise IOError("More than one board found!")
     return boards[0]
 
 class Iterator(threading.Thread):
     def __init__(self, board):
         super(Iterator, self).__init__()
         self.board = board
-        
+
     def run(self):
         while 1:
             try:
                 while self.board.bytes_available():
                     self.board.iterate()
                 time.sleep(0.001)
-            except (AttributeError, serial.SerialException, OSError), e:
+            except (AttributeError, serial.SerialException, OSError):
+                e = sys.exc_info()[1]
                 # this way we can kill the thread by setting the board object
                 # to None, or when the serial port is closed by board.exit()
                 break
-            except Exception, e:
+            except Exception:
+                e = sys.exc_info()[1]
                 # catch 'error: Bad file descriptor'
                 # iterate may be called while the serial port is being closed,
                 # causing an "error: (9, 'Bad file descriptor')"
@@ -56,11 +58,11 @@ class Iterator(threading.Thread):
                 except (TypeError, IndexError):
                     pass
                 raise
-                
+
 def to_two_bytes(integer):
     """
     Breaks an integer into two 7 bit bytes.
-    
+
     >>> for i in range(32768):
     ...     val = to_two_bytes(i)
     ...     assert len(val) == 2
@@ -71,16 +73,16 @@ def to_two_bytes(integer):
     Traceback (most recent call last):
         ...
     ValueError: Can't handle values bigger than 32767 (max for 2 bits)
-    
+
     """
     if integer > 32767:
-        raise ValueError, "Can't handle values bigger than 32767 (max for 2 bits)"
+        raise ValueError("Can't handle values bigger than 32767 (max for 2 bits)")
     return chr(integer % 128), chr(integer >> 7)
-    
+
 def from_two_bytes(bytes):
     """
     Return an integer from two 7 bit bytes.
-    
+
     >>> for i in range(32766, 32768):
     ...     val = to_two_bytes(i)
     ...     ret = from_two_bytes(val)
@@ -107,18 +109,18 @@ def from_two_bytes(bytes):
         except TypeError:
             pass
         return msb << 7 | lsb
-    
+
 def two_byte_iter_to_str(bytes):
     """
     Return a string made from a list of two byte chars.
-    
+
     >>> string, s = 'StandardFirmata', []
     >>> for i in string:
     ...   s.append(i)
     ...   s.append('\\x00')
     >>> two_byte_iter_to_str(s)
     'StandardFirmata'
-    
+
     >>> string, s = 'StandardFirmata', []
     >>> for i in string:
     ...   s.append(ord(i))
@@ -136,11 +138,11 @@ def two_byte_iter_to_str(bytes):
             msb = 0x00
         chars.append(chr(from_two_bytes((lsb, msb))))
     return ''.join(chars)
-    
+
 def str_to_two_byte_iter(string):
     """
     Return a iter consisting of two byte chars from a string.
-    
+
     >>> string, iter = 'StandardFirmata', []
     >>> for i in string:
     ...   iter.append(i)
@@ -157,7 +159,7 @@ def break_to_bytes(value):
     Breaks a value into values of less than 255 that form value when multiplied.
     (Or almost do so with primes)
     Returns a tuple
-    
+
     >>> break_to_bytes(200)
     (200,)
     >>> break_to_bytes(800)
@@ -172,16 +174,16 @@ def break_to_bytes(value):
     for i in range(254):
         c -= 1
         rest = value % c
-        if rest == 0 and value / c < 256:
-            return (c, value / c)
-        elif rest == 0 and value / c > 255:
-            parts = list(break_to_bytes(value / c))
+        if rest == 0 and value // c < 256:
+            return (c, value // c)
+        elif rest == 0 and value // c > 255:
+            parts = list(break_to_bytes(value // c))
             parts.insert(0, c)
             return tuple(parts)
         else:
             if rest < least[1]:
                 least = (c, rest)
-    return (c, value / c)
+    return (c, value // c)
 
 if __name__ == '__main__':
     import doctest

@@ -250,12 +250,12 @@ class TestBoardLayout(BoardBaseTest):
     def test_layout_arduino(self):
         self.assertEqual(len(BOARDS['arduino']['digital']), len(self.board.digital))
         self.assertEqual(len(BOARDS['arduino']['analog']), len(self.board.analog))
-        
+
     def test_layout_arduino_mega(self):
         pyfirmata.pyfirmata.serial.Serial = mockup.MockupSerial
         mega = pyfirmata.Board('', BOARDS['arduino_mega'])
         self.assertEqual(len(BOARDS['arduino_mega']['digital']), len(mega.digital))
-        self.assertEqual(len(BOARDS['arduino_mega']['analog']), len(mega.analog))        
+        self.assertEqual(len(BOARDS['arduino_mega']['analog']), len(mega.analog))
 
     def test_pwm_layout(self):
         pins = []
@@ -343,12 +343,12 @@ if __name__ == '__main__':
         help="Also run the mockup tests")
     options, args = parser.parse_args()
     if not options.mockup:
-        print "Running normal suite. Also consider running the mockup (-m, --mockup) suite"
+        print ("Running normal suite. Also consider running the mockup (-m, --mockup) suite")
         unittest.TextTestRunner(verbosity=3).run(default)
         from pyfirmata import util
-        print "Running doctests for pyfirmata.util. (No output = No errors)"
+        print ("Running doctests for pyfirmata.util. (No output = No errors)")
         doctest.testmod(util)
-        print "Done running doctests"
+        print ("Done running doctests")
     if options.mockup:
-        print "Running the mockup test suite"
+        print ("Running the mockup test suite")
         unittest.TextTestRunner(verbosity=2).run(mockup_suite)
